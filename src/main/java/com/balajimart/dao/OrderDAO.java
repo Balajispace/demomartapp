@@ -82,13 +82,11 @@ public class OrderDAO {
 
     private List<OrderItem> findItemsByOrderId(Connection conn, Long orderId) throws Exception {
         List<OrderItem> items = new ArrayList<>();
-        String sql = """
-            SELECT oi.id, oi.order_id, oi.product_id, oi.quantity, oi.unit_price,
-                   p.name AS product_name, p.image_url AS product_image
-            FROM order_items oi
-            JOIN products p ON oi.product_id = p.id
-            WHERE oi.order_id = ?
-        """;
+        String sql = "SELECT oi.id, oi.order_id, oi.product_id, oi.quantity, oi.unit_price, " +
+                     "p.name AS product_name, p.image_url AS product_image " +
+                     "FROM order_items oi " +
+                     "JOIN products p ON oi.product_id = p.id " +
+                     "WHERE oi.order_id = ?";
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setLong(1, orderId);
             try (ResultSet rs = ps.executeQuery()) {
