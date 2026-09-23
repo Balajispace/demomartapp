@@ -27,8 +27,14 @@ public class LoginServlet extends HttpServlet {
         
         HttpSession session = request.getSession(false);
         if (session != null && session.getAttribute("user") != null) {
-            response.sendRedirect(request.getContextPath() + "/home");
+            User user = (User) session.getAttribute("user");
+            redirectToDashboard(user, request, response);
             return;
+        }
+
+        String role = request.getParameter("role");
+        if (role != null) {
+            request.setAttribute("selectedRole", role.toUpperCase());
         }
 
         request.getRequestDispatcher("/WEB-INF/jsp/login.jsp").forward(request, response);
@@ -40,9 +46,10 @@ public class LoginServlet extends HttpServlet {
 
         String email = request.getParameter("email");
         String password = request.getParameter("password");
+        String role = request.getParameter("role");
 
         try {
-            User user = authService.loginUser(email, password);
+            User user = authService.loginUser(email, password, role);
             HttpSession session = request.getSession(true);
             session.setAttribute("user", user);
 
@@ -51,12 +58,23 @@ public class LoginServlet extends HttpServlet {
                 session.removeAttribute("redirectAfterLogin");
                 response.sendRedirect(redirectAfterLogin);
             } else {
-                response.sendRedirect(request.getContextPath() + "/home");
+                redirectToDashboard(user, request, response);
             }
         } catch (IllegalArgumentException e) {
             request.setAttribute("errorMessage", e.getMessage());
             request.setAttribute("email", email);
+            request.setAttribute("selectedRole", role != null ? role.toUpperCase() : null);
             request.getRequestDispatcher("/WEB-INF/jsp/login.jsp").forward(request, response);
+        }
+    }
+
+    private void redirectToDashboard(User user, HttpServletRequest request, HttpServletResponse response) throws IOException {
+        if (user.isAdmin()) {
+            response.sendRedirect(request.getContextPath() + "/admin/dashboard");
+        } else if (user.isSeller()) {
+            response.sendRedirect(request.getContextPath() + "/seller/dashboard");
+        } else {
+            response.sendRedirect(request.getContextPath() + "/home");
         }
     }
 }

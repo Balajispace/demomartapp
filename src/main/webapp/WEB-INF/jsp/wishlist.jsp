@@ -2,42 +2,29 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 
-<c:set var="pageTitle" value="Products Catalog - BALAJIMART" scope="request"/>
+<c:set var="pageTitle" value="My Wishlist - BALAJIMART" scope="request"/>
 <jsp:include page="/WEB-INF/jsp/common/header.jsp"/>
 
 <div style="margin-bottom: 24px;">
     <h1 style="font-family: 'Outfit', sans-serif; font-size: 2.2rem; font-weight: 800;">
-        <c:choose>
-            <c:when test="${not empty searchQuery}">Search Results for "${searchQuery}"</c:when>
-            <c:when test="${not empty selectedCategory}">${selectedCategory} Products</c:when>
-            <c:otherwise>All Products</c:otherwise>
-        </c:choose>
+        <i class="fa-solid fa-heart" style="color: #ef4444;"></i> My Wishlist
     </h1>
-    <p style="color: var(--gray-500);">Explore our collection of top-rated items</p>
-</div>
-
-<!-- Category Pills -->
-<div class="category-pills">
-    <a href="${pageContext.request.contextPath}/products" class="category-pill ${empty selectedCategory ? 'active' : ''}">All</a>
-    <a href="${pageContext.request.contextPath}/products?category=Electronics" class="category-pill ${selectedCategory == 'Electronics' ? 'active' : ''}">Electronics</a>
-    <a href="${pageContext.request.contextPath}/products?category=Books" class="category-pill ${selectedCategory == 'Books' ? 'active' : ''}">Books</a>
-    <a href="${pageContext.request.contextPath}/products?category=Clothing" class="category-pill ${selectedCategory == 'Clothing' ? 'active' : ''}">Clothing</a>
-    <a href="${pageContext.request.contextPath}/products?category=Accessories" class="category-pill ${selectedCategory == 'Accessories' ? 'active' : ''}">Accessories</a>
-    <a href="${pageContext.request.contextPath}/products?category=Home" class="category-pill ${selectedCategory == 'Home' ? 'active' : ''}">Home</a>
+    <p style="color: var(--gray-500);">Your saved items for future shopping</p>
 </div>
 
 <c:choose>
-    <c:when test="${empty products}">
+    <c:when test="${empty wishlistItems}">
         <div class="table-card" style="padding: 60px; text-align: center;">
-            <i class="fa-solid fa-box-open" style="font-size: 3rem; color: var(--gray-300); margin-bottom: 16px;"></i>
-            <h3 style="font-size: 1.4rem; font-weight: 700; margin-bottom: 8px;">No Products Found</h3>
-            <p style="color: var(--gray-500); margin-bottom: 20px;">We couldn't find any products matching your selection.</p>
-            <a href="${pageContext.request.contextPath}/products" class="btn btn-primary">Clear Filters</a>
+            <i class="fa-regular fa-heart" style="font-size: 3.5rem; color: var(--gray-300); margin-bottom: 16px;"></i>
+            <h3 style="font-size: 1.4rem; font-weight: 700; margin-bottom: 8px;">Your Wishlist is Empty</h3>
+            <p style="color: var(--gray-500); margin-bottom: 20px;">Save items you love to your wishlist and shop them later.</p>
+            <a href="${pageContext.request.contextPath}/products" class="btn btn-primary"><i class="fa-solid fa-bag-shopping"></i> Browse Products</a>
         </div>
     </c:when>
     <c:otherwise>
         <div class="product-grid">
-            <c:forEach items="${products}" var="p">
+            <c:forEach items="${wishlistItems}" var="item">
+                <c:set var="p" value="${item.product}"/>
                 <div class="product-card">
                     <div class="product-img-wrap">
                         <img src="${p.imageUrl}" alt="${p.name}" class="product-img" onerror="this.src='https://images.unsplash.com/photo-1560343090-f0409e92791a?w=600'">
@@ -59,28 +46,19 @@
                                 </span>
                             </c:if>
                         </div>
-                        
+
                         <a href="${pageContext.request.contextPath}/product?id=${p.id}" class="product-name">${p.name}</a>
                         <p class="product-desc">${p.description}</p>
-                        
-                        <div style="margin-top: 8px; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between;">
-                            <c:set var="isWish" value="${not empty wishlistProductIds and wishlistProductIds.contains(p.id)}"/>
-                            <form action="${pageContext.request.contextPath}/wishlist/toggle" method="post" style="display:inline;">
+
+                        <div style="margin: 10px 0; display: flex; gap: 10px; align-items: center;">
+                            <form action="${pageContext.request.contextPath}/wishlist/remove" method="post" style="display:inline;">
                                 <input type="hidden" name="productId" value="${p.id}">
-                                <input type="hidden" name="redirect" value="catalog">
-                                <button type="submit" class="wishlist-btn ${isWish ? 'active' : ''}">
-                                    <c:choose>
-                                        <c:when test="${isWish}">
-                                            <i class="fa-solid fa-heart" style="color: #ef4444;"></i> ♥ Wishlisted
-                                        </c:when>
-                                        <c:otherwise>
-                                            <i class="fa-regular fa-heart"></i> ♡ Add to Wishlist
-                                        </c:otherwise>
-                                    </c:choose>
+                                <button type="submit" class="btn btn-outline btn-sm" style="color: var(--danger); border-color: #fecaca;">
+                                    <i class="fa-solid fa-trash-can"></i> Remove
                                 </button>
                             </form>
-                            <a href="${pageContext.request.contextPath}/product?id=${p.id}" style="font-size: 0.85rem; font-weight: 700; color: var(--primary); text-decoration: none;">
-                                View <i class="fa-solid fa-angle-right"></i>
+                            <a href="${pageContext.request.contextPath}/product?id=${p.id}" class="btn btn-outline btn-sm">
+                                View Product
                             </a>
                         </div>
 

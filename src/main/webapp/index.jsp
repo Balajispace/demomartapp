@@ -48,9 +48,39 @@
                 </c:choose>
             </div>
             <div class="product-body">
-                <span class="product-category">${p.category}</span>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                    <span class="product-category">${p.category}</span>
+                    <c:if test="${not empty p.sellerName}">
+                        <span style="font-size: 0.75rem; color: var(--gray-500); font-weight: 600;">
+                            <i class="fa-solid fa-shop"></i> ${p.sellerName}
+                        </span>
+                    </c:if>
+                </div>
+                
                 <a href="${pageContext.request.contextPath}/product?id=${p.id}" class="product-name">${p.name}</a>
                 <p class="product-desc">${p.description}</p>
+
+                <div style="margin-top: 8px; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between;">
+                    <c:set var="isWish" value="${not empty wishlistProductIds and wishlistProductIds.contains(p.id)}"/>
+                    <form action="${pageContext.request.contextPath}/wishlist/toggle" method="post" style="display:inline;">
+                        <input type="hidden" name="productId" value="${p.id}">
+                        <input type="hidden" name="redirect" value="home">
+                        <button type="submit" class="wishlist-btn ${isWish ? 'active' : ''}">
+                            <c:choose>
+                                <c:when test="${isWish}">
+                                    <i class="fa-solid fa-heart" style="color: #ef4444;"></i> ♥ Wishlisted
+                                </c:when>
+                                <c:otherwise>
+                                    <i class="fa-regular fa-heart"></i> ♡ Add to Wishlist
+                                </c:otherwise>
+                            </c:choose>
+                        </button>
+                    </form>
+                    <a href="${pageContext.request.contextPath}/product?id=${p.id}" style="font-size: 0.85rem; font-weight: 700; color: var(--primary); text-decoration: none;">
+                        View <i class="fa-solid fa-angle-right"></i>
+                    </a>
+                </div>
+
                 <div class="product-footer">
                     <span class="product-price">₹<fmt:formatNumber value="${p.price}" pattern="#,##0.00"/></span>
                     <c:choose>
@@ -58,7 +88,7 @@
                             <form action="${pageContext.request.contextPath}/cart/add" method="post" style="display:inline;">
                                 <input type="hidden" name="productId" value="${p.id}">
                                 <input type="hidden" name="quantity" value="1">
-                                <button type="submit" class="btn btn-primary btn-sm"><i class="fa-solid fa-cart-plus"></i> Add</button>
+                                <button type="submit" class="btn btn-primary btn-sm"><i class="fa-solid fa-cart-plus"></i> Add to Cart</button>
                             </form>
                         </c:when>
                         <c:otherwise>

@@ -106,6 +106,81 @@ public class OrderDAO {
         return items;
     }
 
+    public List<Order> findAllOrders() {
+        List<Order> orders = new ArrayList<>();
+        String sql = "SELECT o.id, o.user_id, o.total_amount, o.status, o.created_at, u.name AS user_name " +
+                     "FROM orders o LEFT JOIN users u ON o.user_id = u.id ORDER BY o.created_at DESC";
+        try (Connection conn = DatabaseConfig.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                Order order = mapOrder(rs);
+                orders.add(order);
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Error fetching all orders for admin", e);
+        }
+        return orders;
+    }
+
+    public List<OrderItem> findOrderItemsBySeller(Long sellerId) {
+        List<OrderItem> items = new ArrayList<>();
+        String sql = "SELECT oi.id, oi.order_id, oi.product_id, oi.quantity, oi.unit_price, " +
+                     "p.name AS product_name, p.image_url AS product_image, o.created_at AS order_date, o.status AS order_status " +
+                     "FROM order_items oi " +
+                     "JOIN products p ON oi.product_id = p.id " +
+                     "JOIN orders o ON oi.order_id = o.id " +
+                     "WHERE p.seller_id = ? ORDER BY o.created_at DESC";
+        try (Connection conn = DatabaseConfig.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setLong(1, sellerId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    OrderItem item = new OrderItem();
+                    item.setId(rs.getLong("id"));
+                    item.setOrderId(rs.getLong("order_id"));
+                    item.setProductId(rs.getLong("product_id"));
+                    item.setQuantity(rs.getInt("quantity"));
+                    item.setUnitPrice(rs.getBigDecimal("unit_price"));
+                    item.setProductName(rs.getString("product_name"));
+                    item.setProductImage(rs.getString("product_image"));
+                    items.add(item);
+                }
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Error fetching seller order items", e);
+        }
+        return items;
+    }
+
+    public int countOrders() {
+        String sql = "SELECT COUNT(*) FROM orders";
+        try (Connection conn = DatabaseConfig.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Error counting orders", e);
+        }
+        return 0;
+    }
+
+    public java.math.BigDecimal calculateTotalRevenue() {
+        String sql = "SELECT COALESCE(SUM(total_amount), 0) FROM orders";
+        try (Connection conn = DatabaseConfig.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) {
+                return rs.getBigDecimal(1);
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Error calculating total revenue", e);
+        }
+        return java.math.BigDecimal.ZERO;
+    }
+
     private Order mapOrder(ResultSet rs) throws Exception {
         Order order = new Order();
         order.setId(rs.getLong("id"));

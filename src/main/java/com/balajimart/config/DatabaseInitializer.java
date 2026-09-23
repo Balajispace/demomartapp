@@ -1,5 +1,6 @@
 package com.balajimart.config;
 
+import com.balajimart.util.PasswordUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -7,6 +8,7 @@ import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 import javax.servlet.annotation.WebListener;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Statement;
 
@@ -22,68 +24,79 @@ public class DatabaseInitializer implements ServletContextListener {
              Statement stmt = conn.createStatement()) {
 
             // Create USERS table
-            stmt.execute("""
-                CREATE TABLE IF NOT EXISTS users (
-                    id BIGINT AUTO_INCREMENT PRIMARY KEY,
-                    name VARCHAR(100) NOT NULL,
-                    email VARCHAR(100) NOT NULL UNIQUE,
-                    password_hash VARCHAR(255) NOT NULL,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                )
-            """);
+            stmt.execute("CREATE TABLE IF NOT EXISTS users (" +
+                    "id BIGINT AUTO_INCREMENT PRIMARY KEY, " +
+                    "name VARCHAR(100) NOT NULL, " +
+                    "email VARCHAR(100) NOT NULL UNIQUE, " +
+                    "password_hash VARCHAR(255) NOT NULL, " +
+                    "role VARCHAR(20) NOT NULL DEFAULT 'BUYER', " +
+                    "status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE', " +
+                    "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)");
+
+            // Ensure columns exist if table was previously created
+            stmt.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS role VARCHAR(20) DEFAULT 'BUYER'");
+            stmt.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS status VARCHAR(20) DEFAULT 'ACTIVE'");
 
             // Create PRODUCTS table
-            stmt.execute("""
-                CREATE TABLE IF NOT EXISTS products (
-                    id BIGINT AUTO_INCREMENT PRIMARY KEY,
-                    name VARCHAR(150) NOT NULL,
-                    description TEXT,
-                    price DECIMAL(10,2) NOT NULL,
-                    category VARCHAR(50) NOT NULL,
-                    stock INT NOT NULL DEFAULT 0,
-                    image_url VARCHAR(255),
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                )
-            """);
+            stmt.execute("CREATE TABLE IF NOT EXISTS products (" +
+                    "id BIGINT AUTO_INCREMENT PRIMARY KEY, " +
+                    "name VARCHAR(150) NOT NULL, " +
+                    "description TEXT, " +
+                    "price DECIMAL(10,2) NOT NULL, " +
+                    "category VARCHAR(50) NOT NULL, " +
+                    "stock INT NOT NULL DEFAULT 0, " +
+                    "image_url VARCHAR(255), " +
+                    "seller_id BIGINT, " +
+                    "status VARCHAR(20) NOT NULL DEFAULT 'APPROVED', " +
+                    "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, " +
+                    "FOREIGN KEY (seller_id) REFERENCES users(id) ON DELETE SET NULL)");
+
+            // Ensure columns exist if table was previously created
+            stmt.execute("ALTER TABLE products ADD COLUMN IF NOT EXISTS seller_id BIGINT");
+            stmt.execute("ALTER TABLE products ADD COLUMN IF NOT EXISTS status VARCHAR(20) DEFAULT 'APPROVED'");
 
             // Create CART_ITEMS table
-            stmt.execute("""
-                CREATE TABLE IF NOT EXISTS cart_items (
-                    id BIGINT AUTO_INCREMENT PRIMARY KEY,
-                    user_id BIGINT NOT NULL,
-                    product_id BIGINT NOT NULL,
-                    quantity INT NOT NULL DEFAULT 1,
-                    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-                    FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
-                )
-            """);
+            stmt.execute("CREATE TABLE IF NOT EXISTS cart_items (" +
+                    "id BIGINT AUTO_INCREMENT PRIMARY KEY, " +
+                    "user_id BIGINT NOT NULL, " +
+                    "product_id BIGINT NOT NULL, " +
+                    "quantity INT NOT NULL DEFAULT 1, " +
+                    "FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE, " +
+                    "FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE)");
+
+            // Create WISHLIST table
+            stmt.execute("CREATE TABLE IF NOT EXISTS wishlist (" +
+                    "id BIGINT AUTO_INCREMENT PRIMARY KEY, " +
+                    "user_id BIGINT NOT NULL, " +
+                    "product_id BIGINT NOT NULL, " +
+                    "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, " +
+                    "FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE, " +
+                    "FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE, " +
+                    "CONSTRAINT unique_user_product UNIQUE (user_id, product_id))");
 
             // Create ORDERS table
-            stmt.execute("""
-                CREATE TABLE IF NOT EXISTS orders (
-                    id BIGINT AUTO_INCREMENT PRIMARY KEY,
-                    user_id BIGINT NOT NULL,
-                    total_amount DECIMAL(10,2) NOT NULL,
-                    status VARCHAR(20) NOT NULL DEFAULT 'PENDING',
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-                )
-            """);
+            stmt.execute("CREATE TABLE IF NOT EXISTS orders (" +
+                    "id BIGINT AUTO_INCREMENT PRIMARY KEY, " +
+                    "user_id BIGINT NOT NULL, " +
+                    "total_amount DECIMAL(10,2) NOT NULL, " +
+                    "status VARCHAR(20) NOT NULL DEFAULT 'PENDING', " +
+                    "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, " +
+                    "FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE)");
 
             // Create ORDER_ITEMS table
-            stmt.execute("""
-                CREATE TABLE IF NOT EXISTS order_items (
-                    id BIGINT AUTO_INCREMENT PRIMARY KEY,
-                    order_id BIGINT NOT NULL,
-                    product_id BIGINT NOT NULL,
-                    quantity INT NOT NULL,
-                    unit_price DECIMAL(10,2) NOT NULL,
-                    FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
-                    FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
-                )
-            """);
+            stmt.execute("CREATE TABLE IF NOT EXISTS order_items (" +
+                    "id BIGINT AUTO_INCREMENT PRIMARY KEY, " +
+                    "order_id BIGINT NOT NULL, " +
+                    "product_id BIGINT NOT NULL, " +
+                    "quantity INT NOT NULL, " +
+                    "unit_price DECIMAL(10,2) NOT NULL, " +
+                    "FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE, " +
+                    "FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE)");
 
             logger.info("Database tables verified/created successfully.");
+
+            // Ensure initial Admin account exists
+            seedAdminUser(conn);
 
             // Check if PRODUCTS table is empty, then seed
             ResultSet rs = stmt.executeQuery("SELECT COUNT(*) FROM products");
@@ -95,6 +108,25 @@ public class DatabaseInitializer implements ServletContextListener {
         } catch (Exception e) {
             logger.error("Error initializing database schema", e);
             throw new RuntimeException("Database initialization failed", e);
+        }
+    }
+
+    private void seedAdminUser(Connection conn) {
+        String checkSql = "SELECT COUNT(*) FROM users WHERE role = 'ADMIN'";
+        try (Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(checkSql)) {
+            if (rs.next() && rs.getInt(1) == 0) {
+                String insertSql = "INSERT INTO users (name, email, password_hash, role, status) VALUES (?, ?, ?, 'ADMIN', 'ACTIVE')";
+                try (PreparedStatement ps = conn.prepareStatement(insertSql)) {
+                    ps.setString(1, "System Admin");
+                    ps.setString(2, "admin@balajimart.com");
+                    ps.setString(3, PasswordUtil.hashPassword("admin123"));
+                    ps.executeUpdate();
+                    logger.info("Default admin user created (admin@balajimart.com / admin123).");
+                }
+            }
+        } catch (Exception e) {
+            logger.warn("Could not seed default admin user", e);
         }
     }
 

@@ -15,7 +15,15 @@
     </div>
 
     <div>
-        <span class="product-category">${product.category}</span>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <span class="product-category">${product.category}</span>
+            <c:if test="${not empty product.sellerName}">
+                <span style="font-size: 0.9rem; color: var(--gray-600); font-weight: 600;">
+                    <i class="fa-solid fa-shop"></i> Sold by: <strong>${product.sellerName}</strong>
+                </span>
+            </c:if>
+        </div>
+
         <h1 style="font-family: 'Outfit', sans-serif; font-size: 2.2rem; font-weight: 800; margin: 8px 0 16px 0;">${product.name}</h1>
         
         <div style="font-size: 2.2rem; font-weight: 800; color: var(--primary); margin-bottom: 20px;">
@@ -26,7 +34,7 @@
             ${product.description}
         </p>
 
-        <div style="margin-bottom: 24px;">
+        <div style="display: flex; gap: 16px; align-items: center; margin-bottom: 24px;">
             <c:choose>
                 <c:when test="${product.stock > 0}">
                     <span class="status-pill status-completed"><i class="fa-solid fa-check"></i> In Stock (${product.stock} available)</span>
@@ -35,6 +43,21 @@
                     <span class="status-pill status-pending" style="background: var(--danger-light); color: var(--danger);"><i class="fa-solid fa-xmark"></i> Out of Stock</span>
                 </c:otherwise>
             </c:choose>
+
+            <form action="${pageContext.request.contextPath}/wishlist/toggle" method="post" style="display:inline;">
+                <input type="hidden" name="productId" value="${product.id}">
+                <input type="hidden" name="redirect" value="product">
+                <button type="submit" class="wishlist-btn ${isWishlisted ? 'active' : ''}" style="font-size: 1rem; border: 1px solid var(--gray-300); padding: 8px 16px; border-radius: var(--radius-md);">
+                    <c:choose>
+                        <c:when test="${isWishlisted}">
+                            <i class="fa-solid fa-heart" style="color: #ef4444;"></i> ♥ Wishlisted
+                        </c:when>
+                        <c:otherwise>
+                            <i class="fa-regular fa-heart"></i> ♡ Add to Wishlist
+                        </c:otherwise>
+                    </c:choose>
+                </button>
+            </form>
         </div>
 
         <c:if test="${product.stock > 0}">

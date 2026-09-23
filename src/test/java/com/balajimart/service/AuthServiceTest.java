@@ -93,4 +93,22 @@ class AuthServiceTest {
         );
         assertEquals("Invalid email or password", ex.getMessage());
     }
+
+    @Test
+    @DisplayName("Should register seller account successfully")
+    void testRegisterSellerSuccess() {
+        User seller = authService.registerUser("Seller Sam", "seller@example.com", "Password123", "Password123", "SELLER");
+        assertNotNull(seller);
+        assertTrue(seller.isSeller());
+        assertEquals("SELLER", seller.getRole());
+    }
+
+    @Test
+    @DisplayName("Should block admin public registration")
+    void testRegisterAdminBlocked() {
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () ->
+                authService.registerUser("Hacker Admin", "admin@fake.com", "Password123", "Password123", "ADMIN")
+        );
+        assertTrue(ex.getMessage().contains("Admin registration is not allowed"));
+    }
 }

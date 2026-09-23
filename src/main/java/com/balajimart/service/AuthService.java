@@ -18,6 +18,10 @@ public class AuthService {
     }
 
     public User registerUser(String name, String email, String password, String confirmPassword) throws IllegalArgumentException {
+        return registerUser(name, email, password, confirmPassword, "BUYER");
+    }
+
+    public User registerUser(String name, String email, String password, String confirmPassword, String role) throws IllegalArgumentException {
         if (!ValidationUtil.isNotEmpty(name)) {
             throw new IllegalArgumentException("Name cannot be empty");
         }
@@ -34,17 +38,29 @@ public class AuthService {
             throw new IllegalArgumentException("Password and confirm password must match");
         }
 
+        String userRole = (role != null && !role.trim().isEmpty()) ? role.trim().toUpperCase() : "BUYER";
+        if ("ADMIN".equals(userRole)) {
+            throw new IllegalArgumentException("Admin registration is not allowed. Please contact system administrator.");
+        }
+        if (!"BUYER".equals(userRole) && !"SELLER".equals(userRole)) {
+            throw new IllegalArgumentException("Invalid account type selected.");
+        }
+
         User existingUser = userDAO.findByEmail(email);
         if (existingUser != null) {
             throw new IllegalArgumentException("Email is already registered");
         }
 
         String hashedPassword = PasswordUtil.hashPassword(password);
-        User newUser = new User(name.trim(), email.trim().toLowerCase(), hashedPassword);
+        User newUser = new User(name.trim(), email.trim().toLowerCase(), hashedPassword, userRole);
         return userDAO.createUser(newUser);
     }
 
     public User loginUser(String email, String password) throws IllegalArgumentException {
+        return loginUser(email, password, null);
+    }
+
+    public User loginUser(String email, String password, String expectedRole) throws IllegalArgumentException {
         if (!ValidationUtil.isNotEmpty(email) || !ValidationUtil.isNotEmpty(password)) {
             throw new IllegalArgumentException("Invalid email or password");
         }
@@ -57,6 +73,16 @@ public class AuthService {
         boolean passwordValid = PasswordUtil.checkPassword(password, user.getPasswordHash());
         if (!passwordValid) {
             throw new IllegalArgumentException("Invalid email or password");
+        }
+
+        if (!user.isActive()) {
+            throw new IllegalArgumentException("Your account has been deactivated. Please contact support.");
+        }
+
+        if (expectedRole != null && !expectedRole.trim().isEmpty()) {
+            if (!expectedRole.trim().equalsIgnoreCase(user.getRole())) {
+                throw new IllegalArgumentException("Selected role does not match account role (" + user.getRole() + ")");
+            }
         }
 
         return user;

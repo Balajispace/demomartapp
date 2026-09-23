@@ -26,7 +26,7 @@ public class DatabaseConfig {
 
             HikariConfig config = new HikariConfig();
             config.setDriverClassName(props.getProperty("db.driver", "org.h2.Driver"));
-            config.setJdbcUrl(props.getProperty("db.url", "jdbc:h2:mem:balajimartdb;DB_CLOSE_DELAY=-1;MODE=LEGACY"));
+            config.setJdbcUrl(props.getProperty("db.url", "jdbc:h2:file:./data/balajimartdb;DB_CLOSE_DELAY=-1;MODE=LEGACY;AUTO_SERVER=TRUE"));
             config.setUsername(props.getProperty("db.user", "sa"));
             config.setPassword(props.getProperty("db.password", ""));
             

@@ -27,8 +27,20 @@ public class RegisterServlet extends HttpServlet {
 
         HttpSession session = request.getSession(false);
         if (session != null && session.getAttribute("user") != null) {
-            response.sendRedirect(request.getContextPath() + "/home");
+            User user = (User) session.getAttribute("user");
+            if (user.isAdmin()) {
+                response.sendRedirect(request.getContextPath() + "/admin/dashboard");
+            } else if (user.isSeller()) {
+                response.sendRedirect(request.getContextPath() + "/seller/dashboard");
+            } else {
+                response.sendRedirect(request.getContextPath() + "/home");
+            }
             return;
+        }
+
+        String role = request.getParameter("role");
+        if (role != null) {
+            request.setAttribute("selectedRole", role.toUpperCase());
         }
 
         request.getRequestDispatcher("/WEB-INF/jsp/register.jsp").forward(request, response);
@@ -42,17 +54,24 @@ public class RegisterServlet extends HttpServlet {
         String email = request.getParameter("email");
         String password = request.getParameter("password");
         String confirmPassword = request.getParameter("confirmPassword");
+        String role = request.getParameter("role");
 
         try {
-            User newUser = authService.registerUser(name, email, password, confirmPassword);
+            User newUser = authService.registerUser(name, email, password, confirmPassword, role);
             HttpSession session = request.getSession(true);
             session.setAttribute("user", newUser);
             session.setAttribute("successMessage", "Account created successfully! Welcome to BALAJIMART.");
-            response.sendRedirect(request.getContextPath() + "/home");
+
+            if (newUser.isSeller()) {
+                response.sendRedirect(request.getContextPath() + "/seller/dashboard");
+            } else {
+                response.sendRedirect(request.getContextPath() + "/home");
+            }
         } catch (IllegalArgumentException e) {
             request.setAttribute("errorMessage", e.getMessage());
             request.setAttribute("name", name);
             request.setAttribute("email", email);
+            request.setAttribute("selectedRole", role != null ? role.toUpperCase() : "BUYER");
             request.getRequestDispatcher("/WEB-INF/jsp/register.jsp").forward(request, response);
         }
     }

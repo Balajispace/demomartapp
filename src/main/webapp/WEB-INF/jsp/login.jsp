@@ -7,9 +7,25 @@
 <div class="auth-wrapper">
     <div class="auth-card">
         <h2 class="auth-title">Welcome Back</h2>
-        <p class="auth-subtitle">Sign in to your BALAJIMART account</p>
+        <p class="auth-subtitle">Select your account type to sign in</p>
+
+        <c:set var="activeTab" value="${not empty selectedRole ? selectedRole : 'BUYER'}"/>
+
+        <div class="role-switcher">
+            <a href="${pageContext.request.contextPath}/login?role=BUYER" class="role-tab ${activeTab == 'BUYER' ? 'active' : ''}">
+                <i class="fa-solid fa-user"></i> Buyer Login
+            </a>
+            <a href="${pageContext.request.contextPath}/login?role=SELLER" class="role-tab ${activeTab == 'SELLER' ? 'active' : ''}">
+                <i class="fa-solid fa-shop"></i> Seller Login
+            </a>
+            <a href="${pageContext.request.contextPath}/login?role=ADMIN" class="role-tab ${activeTab == 'ADMIN' ? 'active' : ''}">
+                <i class="fa-solid fa-shield-halved"></i> Admin Login
+            </a>
+        </div>
 
         <form action="${pageContext.request.contextPath}/login" method="post">
+            <input type="hidden" name="role" value="${activeTab}">
+
             <div class="form-group">
                 <label class="form-label">Email Address</label>
                 <input type="email" name="email" class="form-control" placeholder="name@example.com" value="${email}" required>
@@ -21,12 +37,12 @@
             </div>
 
             <button type="submit" class="btn btn-primary" style="width: 100%; padding: 12px; margin-top: 10px;">
-                <i class="fa-solid fa-right-to-bracket"></i> Sign In
+                <i class="fa-solid fa-right-to-bracket"></i> Sign In as ${activeTab}
             </button>
         </form>
 
         <div style="margin-top: 24px; text-align: center; font-size: 0.9rem; color: var(--gray-500);">
-            Don't have an account? <a href="${pageContext.request.contextPath}/register" style="color: var(--primary); font-weight: 700; text-decoration: none;">Register Now</a>
+            Don't have an account? <a href="${pageContext.request.contextPath}/register?role=${activeTab == 'SELLER' ? 'SELLER' : 'BUYER'}" style="color: var(--primary); font-weight: 700; text-decoration: none;">Register Now</a>
         </div>
     </div>
 </div>

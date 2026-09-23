@@ -24,19 +24,52 @@
         </form>
 
         <ul class="nav-links">
-            <li><a href="${pageContext.request.contextPath}/products" class="nav-link"><i class="fa-solid fa-store"></i> All Products</a></li>
             <c:choose>
                 <c:when test="${not empty sessionScope.user}">
-                    <li><a href="${pageContext.request.contextPath}/cart" class="cart-btn"><i class="fa-solid fa-cart-shopping"></i> Cart</a></li>
-                    <li><a href="${pageContext.request.contextPath}/orders" class="nav-link"><i class="fa-solid fa-box"></i> My Orders</a></li>
-                    <li>
-                        <span style="font-weight: 700; color: var(--primary); font-size: 0.9rem;">
-                            <i class="fa-solid fa-user-circle"></i> ${sessionScope.user.name}
-                        </span>
-                    </li>
+                    <c:choose>
+                        <%-- ADMIN ROLE NAV --%>
+                        <c:when test="${sessionScope.user.role == 'ADMIN'}">
+                            <li><a href="${pageContext.request.contextPath}/admin/dashboard" class="nav-link"><i class="fa-solid fa-gauge"></i> Admin Dashboard</a></li>
+                            <li><a href="${pageContext.request.contextPath}/admin/users" class="nav-link"><i class="fa-solid fa-users"></i> Users</a></li>
+                            <li><a href="${pageContext.request.contextPath}/admin/products" class="nav-link"><i class="fa-solid fa-boxes-stacked"></i> Products</a></li>
+                            <li><a href="${pageContext.request.contextPath}/admin/orders" class="nav-link"><i class="fa-solid fa-receipt"></i> Orders</a></li>
+                            <li>
+                                <span class="role-badge role-badge-admin">
+                                    <i class="fa-solid fa-shield-halved"></i> ADMIN
+                                </span>
+                            </li>
+                        </c:when>
+
+                        <%-- SELLER ROLE NAV --%>
+                        <c:when test="${sessionScope.user.role == 'SELLER'}">
+                            <li><a href="${pageContext.request.contextPath}/seller/dashboard" class="nav-link"><i class="fa-solid fa-chart-line"></i> Seller Dashboard</a></li>
+                            <li><a href="${pageContext.request.contextPath}/seller/products" class="nav-link"><i class="fa-solid fa-store"></i> My Products</a></li>
+                            <li><a href="${pageContext.request.contextPath}/seller/products/add" class="nav-link"><i class="fa-solid fa-plus-circle"></i> Add Product</a></li>
+                            <li><a href="${pageContext.request.contextPath}/seller/orders" class="nav-link"><i class="fa-solid fa-truck-ramp-box"></i> Sales Orders</a></li>
+                            <li>
+                                <span class="role-badge role-badge-seller">
+                                    <i class="fa-solid fa-shop"></i> SELLER
+                                </span>
+                            </li>
+                        </c:when>
+
+                        <%-- BUYER ROLE NAV (DEFAULT) --%>
+                        <c:otherwise>
+                            <li><a href="${pageContext.request.contextPath}/products" class="nav-link"><i class="fa-solid fa-store"></i> Products</a></li>
+                            <li><a href="${pageContext.request.contextPath}/wishlist" class="nav-link"><i class="fa-solid fa-heart" style="color: #ef4444;"></i> Wishlist</a></li>
+                            <li><a href="${pageContext.request.contextPath}/cart" class="cart-btn"><i class="fa-solid fa-cart-shopping"></i> Cart</a></li>
+                            <li><a href="${pageContext.request.contextPath}/orders" class="nav-link"><i class="fa-solid fa-box"></i> My Orders</a></li>
+                            <li>
+                                <span class="role-badge role-badge-buyer">
+                                    <i class="fa-solid fa-user"></i> ${sessionScope.user.name}
+                                </span>
+                            </li>
+                        </c:otherwise>
+                    </c:choose>
                     <li><a href="${pageContext.request.contextPath}/logout" class="btn btn-outline btn-sm"><i class="fa-solid fa-right-from-bracket"></i> Logout</a></li>
                 </c:when>
                 <c:otherwise>
+                    <li><a href="${pageContext.request.contextPath}/products" class="nav-link"><i class="fa-solid fa-store"></i> All Products</a></li>
                     <li><a href="${pageContext.request.contextPath}/login" class="btn btn-outline btn-sm">Sign In</a></li>
                     <li><a href="${pageContext.request.contextPath}/register" class="btn btn-primary btn-sm">Register</a></li>
                 </c:otherwise>

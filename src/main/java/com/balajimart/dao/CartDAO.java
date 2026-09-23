@@ -15,15 +15,13 @@ public class CartDAO {
 
     public List<CartItem> findByUserId(Long userId) {
         List<CartItem> items = new ArrayList<>();
-        String sql = """
-            SELECT c.id AS cart_id, c.user_id, c.product_id, c.quantity,
-                   p.id AS p_id, p.name AS p_name, p.description AS p_desc, p.price AS p_price,
-                   p.category AS p_cat, p.stock AS p_stock, p.image_url AS p_img
-            FROM cart_items c
-            JOIN products p ON c.product_id = p.id
-            WHERE c.user_id = ?
-            ORDER BY c.id ASC
-        """;
+        String sql = "SELECT c.id AS cart_id, c.user_id, c.product_id, c.quantity, " +
+                     "       p.id AS p_id, p.name AS p_name, p.description AS p_desc, p.price AS p_price, " +
+                     "       p.category AS p_cat, p.stock AS p_stock, p.image_url AS p_img " +
+                     "FROM cart_items c " +
+                     "JOIN products p ON c.product_id = p.id " +
+                     "WHERE c.user_id = ? " +
+                     "ORDER BY c.id ASC";
         try (Connection conn = DatabaseConfig.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setLong(1, userId);
